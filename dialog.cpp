@@ -20,7 +20,7 @@ Dialog::Dialog(QWidget *parent) :
     /// tray icon
     trayIcon=new QSystemTrayIcon(this);
     connect(trayIcon,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),this,SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
-    trayIcon->setIcon(QIcon("/mnt/CEWIT/3GPP/3gpp.png"));
+    trayIcon->setIcon(QIcon("3gpp.png"));
     trayIcon->show();
 
     /// menu
