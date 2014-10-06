@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>562</width>
+    <height>178</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <item row="2" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Local FTP prefix</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Current Clipboard</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
+    <widget class="QPushButton" name="btnToTray">
+     <property name="text">
+      <string>Do</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QLineEdit" name="linePrefix">
+     <property name="text">
+      <string>ftp://10.10.10.10/RAN/RAN1/Docs/</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QLineEdit" name="lineClipboard"/>
+   </item>
+   <item row="7" column="1">
+    <widget class="QLineEdit" name="lineOutput"/>
+   </item>
+   <item row="8" column="0">
+    <widget class="QCheckBox" name="chkOpen">
+     <property name="text">
+      <string>AutoOpen</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLineEdit" name="lineRP">
+     <property name="text">
+      <string>ftp://ftp.3gpp.org/tsg_ran/TSG_RAN/TSGR_65/Docs/</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLineEdit" name="lineRPType">
+     <property name="text">
+      <string>RP</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QToolButton" name="toolButton">
+     <property name="text">
+      <string>Open - &gt;</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+  <action name="actionConvertFTP">
+   <property name="text">
+    <string>Local FTP link</string>
+   </property>
+   <property name="toolTip">
+    <string>Local FTP link</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
