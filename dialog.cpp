@@ -98,8 +98,12 @@ void Dialog::on_btnToTray_clicked()
 
     QString cname=cboard->text(QClipboard::Clipboard).trimmed();
     if (!validate(cname)) return;
+    QString prefix;
+    if (ui->radFTP->isChecked())
+    prefix=ui->linePrefix->text().trimmed();
+    else
+    prefix=ui->linePrefixFile->text().trimmed();
 
-    QString prefix=ui->linePrefix->text().trimmed();
     QString RPtype=ui->lineRPType->text().trimmed();
     QString RPprefix=ui->lineRP->text().trimmed();
 
@@ -116,7 +120,7 @@ void Dialog::on_btnToTray_clicked()
     {
         str=RPprefix+"/"+cname;
 
-    }else if((prefix.contains("RAN1") && cname.startsWith("R1")) )
+    }else if(((prefix.contains("RAN1") || prefix.startsWith("/") )  && cname.startsWith("R1")) )
     {
 
         str=prefix+"/"+cname;
@@ -159,4 +163,18 @@ void Dialog::on_toolButton_clicked()
 {
     if(!ui->lineOutput->text().isEmpty())
     QDesktopServices::openUrl(QUrl(ui->lineOutput->text()));
+}
+
+void Dialog::on_radFTP_clicked()
+{
+    ui->linePrefix->setEnabled(true);
+    ui->linePrefixFile->setEnabled(false);
+    on_btnToTray_clicked();
+}
+
+void Dialog::on_radFile_clicked()
+{
+    ui->linePrefix->setEnabled(false);
+    ui->linePrefixFile->setEnabled(true);
+    on_btnToTray_clicked();
 }

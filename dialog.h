@@ -33,6 +33,10 @@ private slots:
     void changed(QClipboard::Mode mode);
     void on_toolButton_clicked();
 
+    void on_radFTP_clicked();
+
+    void on_radFile_clicked();
+
 private:
     Ui::Dialog *ui;
 };

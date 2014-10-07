@@ -7,48 +7,48 @@
     <x>0</x>
     <y>0</y>
     <width>562</width>
-    <height>178</height>
+    <height>208</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
   <layout class="QFormLayout" name="formLayout">
-   <item row="2" column="0">
+   <item row="3" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
       <string>Local FTP prefix</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
+   <item row="5" column="0">
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>Current Clipboard</string>
      </property>
     </widget>
    </item>
-   <item row="9" column="0">
+   <item row="10" column="0">
     <widget class="QPushButton" name="btnToTray">
      <property name="text">
       <string>Do</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
+   <item row="3" column="1">
     <widget class="QLineEdit" name="linePrefix">
      <property name="text">
       <string>ftp://10.10.10.10/RAN/RAN1/Docs/</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
+   <item row="5" column="1">
     <widget class="QLineEdit" name="lineClipboard"/>
    </item>
-   <item row="7" column="1">
+   <item row="8" column="1">
     <widget class="QLineEdit" name="lineOutput"/>
    </item>
-   <item row="8" column="0">
+   <item row="9" column="0">
     <widget class="QCheckBox" name="chkOpen">
      <property name="text">
       <string>AutoOpen</string>
@@ -69,10 +69,41 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="0">
+   <item row="8" column="0">
     <widget class="QToolButton" name="toolButton">
      <property name="text">
       <string>Open - &gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QLineEdit" name="linePrefixFile">
+     <property name="text">
+      <string>/home/ssk/3gppdocs/LAA/docs/</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Local File system</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QRadioButton" name="radFTP">
+     <property name="text">
+      <string>FTP</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QRadioButton" name="radFile">
+     <property name="text">
+      <string>File System</string>
      </property>
     </widget>
    </item>
