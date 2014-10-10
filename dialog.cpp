@@ -118,12 +118,12 @@ void Dialog::on_btnToTray_clicked()
 
     if (cname.startsWith(RPtype))
     {
-        str=RPprefix+"/"+cname;
+        str=RPprefix+"./"+cname;
 
     }else if(((prefix.contains("RAN1") || prefix.startsWith("/") )  && cname.startsWith("R1")) )
     {
 
-        str=prefix+"/"+cname;
+        str=prefix+"./"+cname;
 
     }else
     {
@@ -133,14 +133,15 @@ void Dialog::on_btnToTray_clicked()
 
 if(!str.isEmpty())
 {
-
+//    str.remove("//");
     ui->lineOutput->setText(str);
-    cboard->setText(str);
+
 
     if(ui->chkOpen->isChecked())
     {
         QDesktopServices::openUrl(QUrl(str));
-    }
+    }else
+        cboard->setText(str);
 }
 
 }
