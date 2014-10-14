@@ -7,6 +7,8 @@
 #include <QClipboard>
 #include <QDesktopServices>
 #include <qurl.h>
+
+
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
@@ -31,6 +33,7 @@ Dialog::Dialog(QWidget *parent) :
     trayIcon->setContextMenu(traymenu);
 
     hide();
+    ftp = new QFtp(this);
 
 }
 
@@ -107,6 +110,11 @@ void Dialog::on_btnToTray_clicked()
     QString RPtype=ui->lineRPType->text().trimmed();
     QString RPprefix=ui->lineRP->text().trimmed();
 
+    if (!RPprefix.endsWith('/'))
+        RPprefix.append('/');
+    if (!prefix.endsWith('/'))
+        prefix.append('/');
+
     if(cname.isEmpty() || prefix.isEmpty() || cname.contains(prefix)) return;
 
     ui->lineClipboard->setText(cname);
@@ -118,12 +126,12 @@ void Dialog::on_btnToTray_clicked()
 
     if (cname.startsWith(RPtype))
     {
-        str=RPprefix+"./"+cname;
+        str=RPprefix+cname;
 
     }else if(((prefix.contains("RAN1") || prefix.startsWith("/") )  && cname.startsWith("R1")) )
     {
 
-        str=prefix+"./"+cname;
+        str=prefix+cname;
 
     }else
     {
@@ -136,6 +144,11 @@ if(!str.isEmpty())
 //    str.remove("//");
     ui->lineOutput->setText(str);
 
+    if(ui->radFTP->isChecked())
+    {
+        searchfile=cname;
+        ftp->list();
+    }
 
     if(ui->chkOpen->isChecked())
     {
@@ -163,14 +176,87 @@ void Dialog::on_actionQuit_triggered()
 void Dialog::on_toolButton_clicked()
 {
     if(!ui->lineOutput->text().isEmpty())
-    QDesktopServices::openUrl(QUrl(ui->lineOutput->text()));
+        QDesktopServices::openUrl(QUrl(ui->lineOutput->text()));
+}
+
+
+
+void Dialog::connectFTP()
+{
+//    if (ftp==NULL)
+    {
+        ftp->abort();
+
+        QString addr=ui->linePrefix->text();
+        QUrl url(addr);
+//            if (!url.isValid() || url.scheme().toLower() != QLatin1String("ftp")) {
+                ftp->connectToHost(url.host(), 21);
+                ftp->login();
+//            } else {
+//                ftp->connectToHost(url.host(), url.port(21));
+
+//                if (!url.userName().isEmpty())
+//                    ftp->login(QUrl::fromPercentEncoding(url.userName().toLatin1()), url.password());
+//                else
+                    ftp->login();
+                if (!url.path().isEmpty())
+                    ftp->cd(url.path());
+//            }
+
+                connect(ftp,SIGNAL(commandStarted(int)),this,SLOT(commandStarted(int)));
+                connect(ftp,SIGNAL(commandFinished(int,bool)),this,SLOT(commandFinished(int,bool)));
+                connect(ftp,SIGNAL(listInfo(QUrlInfo)),this,SLOT(listInfo(QUrlInfo)));
+    }
 }
 
 void Dialog::on_radFTP_clicked()
 {
     ui->linePrefix->setEnabled(true);
     ui->linePrefixFile->setEnabled(false);
+    connectFTP();
+
     on_btnToTray_clicked();
+
+}
+
+void Dialog::commandStarted(int cmd)
+{
+    ui->lblStatus->setText("Started "+QString::number(cmd));
+    ui->textBrowser->clear();
+    ui->textBrowser->append("Starting "+QString::number(cmd));
+    ui->textBrowser->setHtml("Current command "+QString::number(ftp->currentCommand()));
+if(ftp->currentCommand()==QFtp::List)
+    filelist.clear();
+}
+
+void Dialog::commandFinished(int cmd, bool err)
+{
+    if (ftp->currentCommand()==QFtp::List)
+            {
+ui->textBrowser->append("FTP:: List");
+
+    ui->lblStatus->setText("Finished " + QString::number(cmd));
+    if (!searchfile.isEmpty())
+    {
+//        ui->textBrowser->append("Looking in "+filelist.join("\n"));
+
+        if (filelist.contains(searchfile,Qt::CaseInsensitive))
+           ui->textBrowser->append("Found file ");
+        else
+            ui->textBrowser->append("Not Found");
+    filelist.clear();
+
+    } }else
+    {
+        ui->textBrowser->append("Running some other command");
+    }
+}
+
+void Dialog::listInfo(QUrlInfo uinfo)
+{
+    if(uinfo.isFile())
+      filelist.append(uinfo.name());
+    // ui->textBrowser->append(uinfo.name());
 }
 
 void Dialog::on_radFile_clicked()
@@ -178,4 +264,12 @@ void Dialog::on_radFile_clicked()
     ui->linePrefix->setEnabled(false);
     ui->linePrefixFile->setEnabled(true);
     on_btnToTray_clicked();
+}
+
+void Dialog::on_linePrefix_editingFinished()
+{
+
+    QString addr=ui->linePrefix->text();
+    QUrl url(addr);
+    ftp->cd(url.path());
 }
