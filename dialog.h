@@ -7,6 +7,8 @@
 #include <QCloseEvent>
 #include <QSettings>
 #include <QtNetwork/QFtp>
+#include <QDir>
+#include <QListWidgetItem>
 namespace Ui {
 class Dialog;
 }
@@ -23,6 +25,7 @@ public:
     QSettings setting;
     QString searchfile;
     QString defaultSource;
+    QDir dir;
 public:
     explicit Dialog(QWidget *parent = 0);
     ~Dialog();
@@ -30,7 +33,7 @@ public:
     void SaveSettings();
 private slots:
     void on_btnToTray_clicked();
-
+    void updateLists();
     void on_actionConvertFTP_triggered();
   void closeEvent(QCloseEvent *event);
    void iconActivated(QSystemTrayIcon::ActivationReason reason);
@@ -48,6 +51,8 @@ private slots:
     void on_linePrefix_editingFinished();
 
     void on_pushButton_clicked();
+
+    void on_listFiles_itemDoubleClicked(QListWidgetItem *item);
 
 private:
     Ui::Dialog *ui;

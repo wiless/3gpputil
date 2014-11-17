@@ -7,18 +7,16 @@
 #include <QClipboard>
 #include <QDesktopServices>
 #include <qurl.h>
-
+#include <qdir.h>
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
-//    this->setWindowFlags();
+    //    this->setWindowFlags();
     setWindowFlags(Qt::WindowStaysOnTopHint);
     ui->setupUi(this);
-    QCoreApplication::setApplicationName("3gpptools");
-    QCoreApplication::setOrganizationName("wiless");
-    QCoreApplication::setOrganizationDomain("wiless.github.com");
+
 
     LoadSettings();
 
@@ -99,19 +97,20 @@ void Dialog::SaveSettings()
 }
 void Dialog::LoadSettings()
 {
-QString linerp=setting.value("Onlinelocation","ftp://ftp.3gpp.org/tsg_ran/TSG_RAN/TSGR_65/Docs/").toString();
-QString localftp=setting.value("LocalFtp","ftp://10.10.10.10/RAN/RAN1/Docs/").toString();
-QString local=setting.value("Local","/home/ssk/3gppdocs/LAA/docs/").toString();
-bool isauto = setting.value("AutoOpen",false).toBool();
-defaultSource=setting.value("DefaultSource","FTP").toString();
+    QString linerp=setting.value("Onlinelocation","ftp://ftp.3gpp.org/tsg_ran/TSG_RAN/TSGR_65/Docs/").toString();
+    QString localftp=setting.value("LocalFtp","ftp://10.10.10.10/RAN/RAN1/Docs/").toString();
+    QString local=setting.value("Local","/home/ssk/3gppdocs/LAA/docs/").toString();
+    bool isauto = setting.value("AutoOpen",false).toBool();
+    defaultSource=setting.value("DefaultSource","FTP").toString();
 
-ui->lineRP->setText(linerp);
-ui->linePrefix->setText(localftp);
-ui->linePrefixFile->setText(local);
-ui->chkOpen->setChecked(isauto);
+    ui->lineRP->setText(linerp);
+    ui->linePrefix->setText(localftp);
+    ui->linePrefixFile->setText(local);
+    ui->chkOpen->setChecked(isauto);
 
 
- ui->radFTP->setChecked((defaultSource=="FTP" ));
+    ui->radFTP->setChecked((defaultSource=="FTP"));
+    ui->radFile->setChecked((defaultSource=="FILE"));
 
 
 
@@ -140,12 +139,15 @@ void Dialog::on_btnToTray_clicked()
     QString str;
 
     QString cname=cboard->text(QClipboard::Clipboard).trimmed();
+    QString contribNumber;
     if (!validate(cname)) return;
     QString prefix;
     if (ui->radFTP->isChecked())
-    prefix=ui->linePrefix->text().trimmed();
+        prefix=ui->linePrefix->text().trimmed();
     else
-    prefix=ui->linePrefixFile->text().trimmed();
+        prefix=ui->linePrefixFile->text().trimmed();
+
+    dir.setPath(ui->linePrefixFile->text());
 
     QString RPtype=ui->lineRPType->text().trimmed();
     QString RPprefix=ui->lineRP->text().trimmed();
@@ -158,7 +160,7 @@ void Dialog::on_btnToTray_clicked()
     if(cname.isEmpty() || prefix.isEmpty() || cname.contains(prefix)) return;
 
     ui->lineClipboard->setText(cname);
-
+    contribNumber=cname;
     if (!cname.contains(".zip",Qt::CaseInsensitive))
         cname=cname+".zip";
 
@@ -179,23 +181,83 @@ void Dialog::on_btnToTray_clicked()
     }
 
 
-if(!str.isEmpty())
-{
-//    str.remove("//");
-    ui->lineOutput->setText(str);
-
-    if(ui->radFTP->isChecked())
+    if(!str.isEmpty())
     {
-        searchfile=cname;
-        ftp->list();
+        //    str.remove("//");
+        ui->lineOutput->setText(str);
+
+        if(ui->radFTP->isChecked())
+        {
+            searchfile=cname;
+            ftp->list();
+            return;
+        }
+        /// List all possible files in the box
+        /// R1-145217
+
+        QStringList filters;
+        filters << "*"+contribNumber+"*" ;
+        dir.setNameFilters(filters);
+        dir.setSorting(QDir::Type);
+
+        updateLists();
+
+        //    if(ui->chkOpen->isChecked())
+        //    {
+        //    QDesktopServices::openUrl(QUrl(str));
+        //    }else
+        //        cboard->setText(str);
     }
 
-    if(ui->chkOpen->isChecked())
-    {
-        QDesktopServices::openUrl(QUrl(str));
-    }else
-        cboard->setText(str);
 }
+
+void Dialog::updateLists()
+{
+
+    ui->listFiles->clear();
+
+    QStringList result=dir.entryList();
+    QFileInfoList infolist=  dir.entryInfoList();
+//    ui->textBrowser->append("Found these matching contents");
+    for(int k=0;k<infolist.length();k++)
+    {
+        ui->listFiles->addItem(infolist[k].fileName());
+        //        ui->textBrowser->append(infolist[k].fileName());
+        //        ui->textBrowser->append("\n"+infolist[k].completeSuffix());
+    }
+
+    //    if(infolist.length()==1 && ui->chkOpen->isChecked())
+    //    {
+    //        QDesktopServices::openUrl(QUrl(str));
+    //    }else
+    {
+        QString zipfile;
+
+
+
+        for(int k=0;k<infolist.length();k++)
+        {
+
+            if (infolist[k].completeSuffix()!="zip") {
+                if(ui->chkOpen->isChecked())
+                {
+                    QDesktopServices::openUrl(QUrl(infolist[k].filePath()));
+                }else
+                    cboard->setText(infolist[k].filePath());
+                break;
+            }else
+                zipfile=infolist[k].filePath();
+        }
+        if(ui->chkOpen->isChecked())
+        {
+            QDesktopServices::openUrl(QUrl(zipfile));
+        }else
+            cboard->setText(zipfile);
+
+
+}
+
+
 
 }
 
@@ -223,29 +285,29 @@ void Dialog::on_toolButton_clicked()
 
 void Dialog::connectFTP()
 {
-//    if (ftp==NULL)
+    //    if (ftp==NULL)
     {
         ftp->abort();
 
         QString addr=ui->linePrefix->text();
         QUrl url(addr);
-//            if (!url.isValid() || url.scheme().toLower() != QLatin1String("ftp")) {
-                ftp->connectToHost(url.host(), 21);
-                ftp->login();
-//            } else {
-//                ftp->connectToHost(url.host(), url.port(21));
+        //            if (!url.isValid() || url.scheme().toLower() != QLatin1String("ftp")) {
+        ftp->connectToHost(url.host(), 21);
+        ftp->login();
+        //            } else {
+        //                ftp->connectToHost(url.host(), url.port(21));
 
-//                if (!url.userName().isEmpty())
-//                    ftp->login(QUrl::fromPercentEncoding(url.userName().toLatin1()), url.password());
-//                else
-                    ftp->login();
-                if (!url.path().isEmpty())
-                    ftp->cd(url.path());
-//            }
+        //                if (!url.userName().isEmpty())
+        //                    ftp->login(QUrl::fromPercentEncoding(url.userName().toLatin1()), url.password());
+        //                else
+        ftp->login();
+        if (!url.path().isEmpty())
+            ftp->cd(url.path());
+        //            }
 
-                connect(ftp,SIGNAL(commandStarted(int)),this,SLOT(commandStarted(int)));
-                connect(ftp,SIGNAL(commandFinished(int,bool)),this,SLOT(commandFinished(int,bool)));
-                connect(ftp,SIGNAL(listInfo(QUrlInfo)),this,SLOT(listInfo(QUrlInfo)));
+        connect(ftp,SIGNAL(commandStarted(int)),this,SLOT(commandStarted(int)));
+        connect(ftp,SIGNAL(commandFinished(int,bool)),this,SLOT(commandFinished(int,bool)));
+        connect(ftp,SIGNAL(listInfo(QUrlInfo)),this,SLOT(listInfo(QUrlInfo)));
     }
 }
 
@@ -267,28 +329,28 @@ void Dialog::commandStarted(int cmd)
     ui->textBrowser->clear();
     ui->textBrowser->append("Starting "+QString::number(cmd));
     ui->textBrowser->setHtml("Current command "+QString::number(ftp->currentCommand()));
-if(ftp->currentCommand()==QFtp::List)
-    filelist.clear();
+    if(ftp->currentCommand()==QFtp::List)
+        filelist.clear();
 }
 
 void Dialog::commandFinished(int cmd, bool err)
 {
     if (ftp->currentCommand()==QFtp::List)
-            {
-ui->textBrowser->append("FTP:: List");
-
-    ui->lblStatus->setText("Finished " + QString::number(cmd));
-    if (!searchfile.isEmpty())
     {
-//        ui->textBrowser->append("Looking in "+filelist.join("\n"));
+        ui->textBrowser->append("FTP:: List");
 
-        if (filelist.contains(searchfile,Qt::CaseInsensitive))
-           ui->textBrowser->append("Found file ");
-        else
-            ui->textBrowser->append("Not Found");
-    filelist.clear();
+        ui->lblStatus->setText("Finished " + QString::number(cmd));
+        if (!searchfile.isEmpty())
+        {
+            //        ui->textBrowser->append("Looking in "+filelist.join("\n"));
 
-    } }else
+            if (filelist.contains(searchfile,Qt::CaseInsensitive))
+                ui->textBrowser->append("Found file ");
+            else
+                ui->textBrowser->append("Not Found");
+            filelist.clear();
+
+        } }else
     {
         ui->textBrowser->append("Running some other command");
     }
@@ -297,7 +359,7 @@ ui->textBrowser->append("FTP:: List");
 void Dialog::listInfo(QUrlInfo uinfo)
 {
     if(uinfo.isFile())
-      filelist.append(uinfo.name());
+        filelist.append(uinfo.name());
     // ui->textBrowser->append(uinfo.name());
 }
 
@@ -319,6 +381,13 @@ void Dialog::on_linePrefix_editingFinished()
 
 void Dialog::on_pushButton_clicked()
 {
-SaveSettings();
+    SaveSettings();
+
+}
+
+void Dialog::on_listFiles_itemDoubleClicked(QListWidgetItem *item)
+{
+    //    ui->textBrowser->append("Selected Path : "+dir.filePath(item->text()));
+    QDesktopServices::openUrl(QUrl(dir.filePath(item->text())));
 
 }
