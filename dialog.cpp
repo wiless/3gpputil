@@ -16,6 +16,11 @@ Dialog::Dialog(QWidget *parent) :
 //    this->setWindowFlags();
     setWindowFlags(Qt::WindowStaysOnTopHint);
     ui->setupUi(this);
+    QCoreApplication::setApplicationName("3gpptools");
+    QCoreApplication::setOrganizationName("wiless");
+    QCoreApplication::setOrganizationDomain("wiless.github.com");
+
+    LoadSettings();
 
     cboard =  QApplication::clipboard();
     connect(cboard,SIGNAL(changed(QClipboard::Mode)),this,SLOT(changed(QClipboard::Mode)));
@@ -75,6 +80,41 @@ void Dialog::iconActivated(QSystemTrayIcon::ActivationReason reason)
 Dialog::~Dialog()
 {
     delete ui;
+}
+void Dialog::SaveSettings()
+{
+
+    QString linerp=ui->lineRP->text();
+    QString localftp=ui->linePrefix->text();
+    QString local=ui->linePrefixFile->text();
+    bool isauto= ui->chkOpen->isChecked();
+
+
+    setting.setValue("Onlinelocation",linerp);
+    setting.setValue("LocalFtp",localftp);
+    setting.setValue("Local",local);
+    setting.setValue("AutoOpen",isauto);
+    setting.setValue("DefaultSource",defaultSource);
+
+}
+void Dialog::LoadSettings()
+{
+QString linerp=setting.value("Onlinelocation","ftp://ftp.3gpp.org/tsg_ran/TSG_RAN/TSGR_65/Docs/").toString();
+QString localftp=setting.value("LocalFtp","ftp://10.10.10.10/RAN/RAN1/Docs/").toString();
+QString local=setting.value("Local","/home/ssk/3gppdocs/LAA/docs/").toString();
+bool isauto = setting.value("AutoOpen",false).toBool();
+defaultSource=setting.value("DefaultSource","FTP").toString();
+
+ui->lineRP->setText(linerp);
+ui->linePrefix->setText(localftp);
+ui->linePrefixFile->setText(local);
+ui->chkOpen->setChecked(isauto);
+
+
+ ui->radFTP->setChecked((defaultSource=="FTP" ));
+
+
+
 }
 
 bool validate(QString str)
@@ -211,6 +251,8 @@ void Dialog::connectFTP()
 
 void Dialog::on_radFTP_clicked()
 {
+
+    defaultSource="FTP";
     ui->linePrefix->setEnabled(true);
     ui->linePrefixFile->setEnabled(false);
     connectFTP();
@@ -261,6 +303,7 @@ void Dialog::listInfo(QUrlInfo uinfo)
 
 void Dialog::on_radFile_clicked()
 {
+    defaultSource="FILE";
     ui->linePrefix->setEnabled(false);
     ui->linePrefixFile->setEnabled(true);
     on_btnToTray_clicked();
@@ -272,4 +315,10 @@ void Dialog::on_linePrefix_editingFinished()
     QString addr=ui->linePrefix->text();
     QUrl url(addr);
     ftp->cd(url.path());
+}
+
+void Dialog::on_pushButton_clicked()
+{
+SaveSettings();
+
 }

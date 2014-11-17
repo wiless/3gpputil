@@ -5,6 +5,7 @@
 #include <qmenu.h>
 #include <QSystemTrayIcon>
 #include <QCloseEvent>
+#include <QSettings>
 #include <QtNetwork/QFtp>
 namespace Ui {
 class Dialog;
@@ -19,11 +20,14 @@ public:
     QClipboard *cboard;
     QFtp *ftp;
     QStringList filelist;
+    QSettings setting;
     QString searchfile;
+    QString defaultSource;
 public:
     explicit Dialog(QWidget *parent = 0);
     ~Dialog();
-
+    void LoadSettings();
+    void SaveSettings();
 private slots:
     void on_btnToTray_clicked();
 
@@ -42,6 +46,8 @@ private slots:
     void on_radFile_clicked();
 
     void on_linePrefix_editingFinished();
+
+    void on_pushButton_clicked();
 
 private:
     Ui::Dialog *ui;
