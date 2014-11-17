@@ -32,8 +32,8 @@ public:
     void LoadSettings();
     void SaveSettings();
 private slots:
-    void on_btnToTray_clicked();
-    void updateLists();
+    void Search();
+    bool updateLists();
     void on_actionConvertFTP_triggered();
   void closeEvent(QCloseEvent *event);
    void iconActivated(QSystemTrayIcon::ActivationReason reason);
@@ -53,6 +53,10 @@ private slots:
     void on_pushButton_clicked();
 
     void on_listFiles_itemDoubleClicked(QListWidgetItem *item);
+
+
+
+    void on_toolButton_2_clicked();
 
 private:
     Ui::Dialog *ui;

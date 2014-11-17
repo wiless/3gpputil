@@ -51,7 +51,7 @@ void Dialog::changed(QClipboard::Mode mode)
 {
     if (isVisible() && mode==QClipboard::Clipboard)
     {
-        on_btnToTray_clicked();
+        Search();
         //        ui->lineClipboard->setText(cboard->text(mode));
 
     }
@@ -67,7 +67,7 @@ void Dialog::iconActivated(QSystemTrayIcon::ActivationReason reason)
         else
         {
             //            ui->lineClipboard->setText(cboard->text(QClipboard::Clipboard));
-            on_btnToTray_clicked();
+            Search();
             show();
         }
     }
@@ -84,34 +84,47 @@ void Dialog::SaveSettings()
 
     QString linerp=ui->lineRP->text();
     QString localftp=ui->linePrefix->text();
-    QString local=ui->linePrefixFile->text();
+    //    QString local=ui->linePrefixFile->text();
     bool isauto= ui->chkOpen->isChecked();
+
+
+    QStringList pathlists; //=setting.value("SearchPaths","/home/ssk/3gppdocs/LAA/docs/").toStringList();
+
+    for (int var = 0; var < ui->cmbPathLists->count(); ++var) {
+        pathlists.append(ui->cmbPathLists->itemText(var));
+    }
+    setting.setValue("SearchPaths",pathlists);
+
 
 
     setting.setValue("Onlinelocation",linerp);
     setting.setValue("LocalFtp",localftp);
-    setting.setValue("Local",local);
+    //    setting.setValue("Local",local);
     setting.setValue("AutoOpen",isauto);
     setting.setValue("DefaultSource",defaultSource);
+
+
 
 }
 void Dialog::LoadSettings()
 {
     QString linerp=setting.value("Onlinelocation","ftp://ftp.3gpp.org/tsg_ran/TSG_RAN/TSGR_65/Docs/").toString();
     QString localftp=setting.value("LocalFtp","ftp://10.10.10.10/RAN/RAN1/Docs/").toString();
-    QString local=setting.value("Local","/home/ssk/3gppdocs/LAA/docs/").toString();
+    //    QString local=setting.value("Local","/home/ssk/3gppdocs/docs/FDMIMO").toString();
     bool isauto = setting.value("AutoOpen",false).toBool();
     defaultSource=setting.value("DefaultSource","FTP").toString();
 
     ui->lineRP->setText(linerp);
     ui->linePrefix->setText(localftp);
-    ui->linePrefixFile->setText(local);
+    //    ui->linePrefixFile->setText(local);
     ui->chkOpen->setChecked(isauto);
 
 
     ui->radFTP->setChecked((defaultSource=="FTP"));
     ui->radFile->setChecked((defaultSource=="FILE"));
 
+    QStringList  pathlists=setting.value("SearchPaths","/home/ssk/3gppdocs/LAA/docs/").toStringList();
+    ui->cmbPathLists->addItems(pathlists);
 
 
 }
@@ -134,138 +147,129 @@ bool validate(QString str)
 }
 
 
-void Dialog::on_btnToTray_clicked()
+void Dialog::Search()
 {
     QString str;
-
-    QString cname=cboard->text(QClipboard::Clipboard).trimmed();
-    QString contribNumber;
-    if (!validate(cname)) return;
-    QString prefix;
-    if (ui->radFTP->isChecked())
-        prefix=ui->linePrefix->text().trimmed();
-    else
-        prefix=ui->linePrefixFile->text().trimmed();
-
-    dir.setPath(ui->linePrefixFile->text());
-
     QString RPtype=ui->lineRPType->text().trimmed();
     QString RPprefix=ui->lineRP->text().trimmed();
-
     if (!RPprefix.endsWith('/'))
         RPprefix.append('/');
-    if (!prefix.endsWith('/'))
-        prefix.append('/');
 
-    if(cname.isEmpty() || prefix.isEmpty() || cname.contains(prefix)) return;
+    QString cname=cboard->text(QClipboard::Clipboard).trimmed();
+    ui->textBrowser->append("\n Searching Clipboard : "+cname);
+    QString contribNumber;
+    if (!validate(cname) || cname.isEmpty()) return;
 
-    ui->lineClipboard->setText(cname);
     contribNumber=cname;
     if (!cname.contains(".zip",Qt::CaseInsensitive))
+    {
+        contribNumber=cname;
         cname=cname+".zip";
-
-    /// contribution is from current PREFIX
-
-    if (cname.startsWith(RPtype))
-    {
-        str=RPprefix+cname;
-
-    }else if(((prefix.contains("RAN1") || prefix.startsWith("/") )  && cname.startsWith("R1")) )
-    {
-
-        str=prefix+cname;
-
-    }else
-    {
-        str="";
     }
 
 
-    if(!str.isEmpty())
+    QString prefix;
+    if (ui->radFTP->isChecked())
     {
-        //    str.remove("//");
+
+        prefix=ui->linePrefix->text().trimmed();
+        if (!prefix.endsWith('/'))
+            prefix.append('/');
+
+        if (prefix.isEmpty() || cname.contains(prefix)) return;
+
+        if (cname.startsWith(RPtype))
+        {
+            str=RPprefix+cname;
+
+        }else if(((prefix.contains("RAN1") || prefix.startsWith("/") )  && cname.startsWith("R1")) )
+        {
+
+            str=prefix+cname;
+
+        }else
+        {
+            str="";
+        }
         ui->lineOutput->setText(str);
 
-        if(ui->radFTP->isChecked())
-        {
-            searchfile=cname;
-            ftp->list();
-            return;
-        }
-        /// List all possible files in the box
-        /// R1-145217
+        searchfile=cname;
+        ftp->list();
+        return;
 
-        QStringList filters;
-        filters << "*"+contribNumber+"*" ;
-        dir.setNameFilters(filters);
-        dir.setSorting(QDir::Type);
-
-        updateLists();
-
-        //    if(ui->chkOpen->isChecked())
-        //    {
-        //    QDesktopServices::openUrl(QUrl(str));
-        //    }else
-        //        cboard->setText(str);
     }
+    else
+    {
+        if(ui->cmbPathLists->count()==0) return;
+        /// List all possible files in the box
+        for (int var = 0; var < ui->cmbPathLists->count(); ++var) {
+            //    dir.setPath(ui->linePrefixFile->text());
+            dir.setPath(ui->cmbPathLists->itemText(var));
+
+            QStringList filters;
+            filters << "*"+contribNumber+"*" ;
+            dir.setNameFilters(filters);
+            dir.setSorting(QDir::Type);
+
+            if(updateLists())
+                break;
+        }
+    }
+
+    ui->lineClipboard->setText(contribNumber);
 
 }
 
-void Dialog::updateLists()
+bool Dialog::updateLists()
 {
 
     ui->listFiles->clear();
 
     QStringList result=dir.entryList();
     QFileInfoList infolist=  dir.entryInfoList();
-//    ui->textBrowser->append("Found these matching contents");
+    //    ui->textBrowser->append("Found these matching contents");
     for(int k=0;k<infolist.length();k++)
     {
         ui->listFiles->addItem(infolist[k].fileName());
-        //        ui->textBrowser->append(infolist[k].fileName());
-        //        ui->textBrowser->append("\n"+infolist[k].completeSuffix());
+
     }
 
-    //    if(infolist.length()==1 && ui->chkOpen->isChecked())
-    //    {
-    //        QDesktopServices::openUrl(QUrl(str));
-    //    }else
+
+
+    QString zipfile;
+
+    for(int k=0;k<infolist.length();k++)
     {
-        QString zipfile;
 
-
-
-        for(int k=0;k<infolist.length();k++)
-        {
-
-            if (infolist[k].completeSuffix()!="zip") {
-                if(ui->chkOpen->isChecked())
-                {
-                    QDesktopServices::openUrl(QUrl(infolist[k].filePath()));
-                }else
-                    cboard->setText(infolist[k].filePath());
-                break;
-            }else
-                zipfile=infolist[k].filePath();
-        }
-        if(ui->chkOpen->isChecked())
-        {
-            QDesktopServices::openUrl(QUrl(zipfile));
+        if (infolist[k].completeSuffix()!="zip") {
+            if(ui->chkOpen->isChecked())
+            {
+                QDesktopServices::openUrl(QUrl(infolist[k].filePath()));
+            }
+//            else
+//                cboard->setText(infolist[k].filePath());
+    break;
         }else
-            cboard->setText(zipfile);
+            zipfile=infolist[k].filePath();
+    }
+    if(ui->chkOpen->isChecked())
+    {
+        QDesktopServices::openUrl(QUrl(zipfile));
+    }
+//    else
+//        cboard->setText(zipfile);
 
-
-}
-
-
+    if (infolist.length()>0)
+        return true;
+    else
+        return false;
 
 }
 
 void Dialog::on_actionConvertFTP_triggered()
 {
 
-    on_btnToTray_clicked();
-
+    Search();
 
     //    QMessageBox::information(this,"Convert to ftp","test");
 }
@@ -316,10 +320,11 @@ void Dialog::on_radFTP_clicked()
 
     defaultSource="FTP";
     ui->linePrefix->setEnabled(true);
-    ui->linePrefixFile->setEnabled(false);
+    //    ui->linePrefixFile->setEnabled(false);
+    ui->cmbPathLists->setEnabled(false);
     connectFTP();
 
-    on_btnToTray_clicked();
+    Search();
 
 }
 
@@ -367,8 +372,9 @@ void Dialog::on_radFile_clicked()
 {
     defaultSource="FILE";
     ui->linePrefix->setEnabled(false);
-    ui->linePrefixFile->setEnabled(true);
-    on_btnToTray_clicked();
+    //    ui->linePrefixFile->setEnabled(true);
+    ui->cmbPathLists->setEnabled(true);
+    Search();
 }
 
 void Dialog::on_linePrefix_editingFinished()
@@ -389,5 +395,11 @@ void Dialog::on_listFiles_itemDoubleClicked(QListWidgetItem *item)
 {
     //    ui->textBrowser->append("Selected Path : "+dir.filePath(item->text()));
     QDesktopServices::openUrl(QUrl(dir.filePath(item->text())));
+
+}
+
+void Dialog::on_toolButton_2_clicked()
+{
+    ui->cmbPathLists->removeItem(ui->cmbPathLists->currentIndex());
 
 }
