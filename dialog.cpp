@@ -230,6 +230,7 @@ bool Dialog::updateLists()
     //    ui->textBrowser->append("Found these matching contents");
     for(int k=0;k<infolist.length();k++)
     {
+
         ui->listFiles->addItem(infolist[k].fileName());
 
     }
@@ -244,7 +245,8 @@ bool Dialog::updateLists()
         if (infolist[k].completeSuffix()!="zip") {
             if(ui->chkOpen->isChecked())
             {
-                QDesktopServices::openUrl(QUrl(infolist[k].filePath()));
+                QUrl url=QUrl::fromLocalFile(infolist[k].filePath());
+                QDesktopServices::openUrl(url);
             }
 //            else
 //                cboard->setText(infolist[k].filePath());
@@ -394,7 +396,11 @@ void Dialog::on_pushButton_clicked()
 void Dialog::on_listFiles_itemDoubleClicked(QListWidgetItem *item)
 {
     //    ui->textBrowser->append("Selected Path : "+dir.filePath(item->text()));
-    QDesktopServices::openUrl(QUrl(dir.filePath(item->text())));
+    QString txt=dir.filePath(item->text());
+    QUrl url=QUrl::fromLocalFile(txt);
+    qDebug() << "Opening " << url;
+//    txt='"'+txt+'"';
+    QDesktopServices::openUrl(url);
 
 }
 
