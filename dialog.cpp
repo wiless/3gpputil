@@ -18,7 +18,6 @@ Dialog::Dialog(QWidget *parent) :
     ui->setupUi(this);
 
 
-    LoadSettings();
 
     cboard =  QApplication::clipboard();
     connect(cboard,SIGNAL(changed(QClipboard::Mode)),this,SLOT(changed(QClipboard::Mode)));
@@ -37,6 +36,8 @@ Dialog::Dialog(QWidget *parent) :
 
     hide();
     ftp = new QFtp(this);
+    LoadSettings();
+
 
 }
 
@@ -121,7 +122,12 @@ void Dialog::LoadSettings()
 
 
     ui->radFTP->setChecked((defaultSource=="FTP"));
+
     ui->radFile->setChecked((defaultSource=="FILE"));
+    if(ui->radFTP->isChecked())
+        on_radFTP_clicked();
+    //    else
+    //        on_radFile_clicked();
 
     QStringList  pathlists=setting.value("SearchPaths","/home/ssk/3gppdocs/LAA/docs/").toStringList();
     ui->cmbPathLists->addItems(pathlists);
@@ -192,9 +198,15 @@ void Dialog::Search()
             str="";
         }
         ui->lineOutput->setText(str);
-
+        ui->textBrowser->append("Try opening it "+QUrl(str).toString());
         searchfile=cname;
-        ftp->list();
+        if (ui->chkSearchFTP->isChecked())
+        {
+
+            ftp->list();
+        }else
+        QDesktopServices::openUrl(ui->lineOutput->text());
+
         return;
 
     }
@@ -248,9 +260,9 @@ bool Dialog::updateLists()
                 QUrl url=QUrl::fromLocalFile(infolist[k].filePath());
                 QDesktopServices::openUrl(url);
             }
-//            else
-//                cboard->setText(infolist[k].filePath());
-    break;
+            //            else
+            //                cboard->setText(infolist[k].filePath());
+            break;
         }else
             zipfile=infolist[k].filePath();
     }
@@ -258,8 +270,8 @@ bool Dialog::updateLists()
     {
         QDesktopServices::openUrl(QUrl(zipfile));
     }
-//    else
-//        cboard->setText(zipfile);
+    //    else
+    //        cboard->setText(zipfile);
 
     if (infolist.length()>0)
         return true;
@@ -291,7 +303,7 @@ void Dialog::on_toolButton_clicked()
 
 void Dialog::connectFTP()
 {
-    //    if (ftp==NULL)
+    //        if (ftp==NULL)
     {
         ftp->abort();
 
@@ -352,7 +364,11 @@ void Dialog::commandFinished(int cmd, bool err)
             //        ui->textBrowser->append("Looking in "+filelist.join("\n"));
 
             if (filelist.contains(searchfile,Qt::CaseInsensitive))
+            {
                 ui->textBrowser->append("Found file ");
+                QDesktopServices::openUrl(ui->lineOutput->text());
+
+            }
             else
                 ui->textBrowser->append("Not Found");
             filelist.clear();
@@ -367,7 +383,9 @@ void Dialog::listInfo(QUrlInfo uinfo)
 {
     if(uinfo.isFile())
         filelist.append(uinfo.name());
-    // ui->textBrowser->append(uinfo.name());
+
+    //        ui->textBrowser->append("Some Info"+uinfo.name());
+
 }
 
 void Dialog::on_radFile_clicked()
@@ -399,7 +417,7 @@ void Dialog::on_listFiles_itemDoubleClicked(QListWidgetItem *item)
     QString txt=dir.filePath(item->text());
     QUrl url=QUrl::fromLocalFile(txt);
     qDebug() << "Opening " << url;
-//    txt='"'+txt+'"';
+    //    txt='"'+txt+'"';
     QDesktopServices::openUrl(url);
 
 }
