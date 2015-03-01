@@ -1,5 +1,6 @@
 3gpputil
 ========
+![3GPP Logo](/3gpp.png)
 
 A tray application written in Qt, for using during 3GPP meetings
 
